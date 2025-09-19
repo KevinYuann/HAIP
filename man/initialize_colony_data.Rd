@@ -2,24 +2,28 @@
 % Please edit documentation in R/initialize_colony_data.R
 \name{initialize_colony_data}
 \alias{initialize_colony_data}
-\title{Initialize Colony Data from .dat File}
+\title{Initialize Colony Data from File}
 \usage{
-initialize_colony_data(path_name, image_df)
+initialize_colony_data(path_name, image_obj)
 }
 \arguments{
-\item{path_name}{`character(1)`. Path to the .dat file to be read and
-processed. The file should be tab-separated with optional header lines
-starting with "#".}
+\item{path_name}{`character(1)`. Path to the TSV file containing colony data.
+The file may contain comment lines starting with "#" at the beginning.}
 
-\item{image_df}{`data.frame`. Image data frame created by `initialize_image()`.
-Used to determine the image height for coordinate transformation.}
+\item{image_obj}{`cimg`. Image object from the imager package (currently
+unused but included for potential future functionality).}
 }
 \value{
-A `data.frame` containing the colony data with y-coordinates flipped
-  to match image orientation (y increases downwards from top-left origin).
+A `data.frame` containing the colony data from the file with the
+  first column renamed to "row" and comment lines properly skipped.
 }
 \description{
-Reads a .dat file containing colony data and converts it to a data frame format.
-Automatically skips header lines that start with "#" and adjusts y-coordinates
-to match image coordinate system (top-left origin, y increasing downwards).
+Reads colony data from a tab-separated values (TSV) file, automatically
+skipping comment lines that start with "#" and properly formatting the
+first column as "row". The function handles files with variable numbers
+of header comment lines.
+}
+\details{
+The coordinates in the input file are assumed to already be in the top-left
+origin coordinate system, so no coordinate transformation is performed.
 }

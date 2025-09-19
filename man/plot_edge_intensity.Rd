@@ -2,11 +2,11 @@
 % Please edit documentation in R/plot_edge_intensity.R
 \name{plot_edge_intensity}
 \alias{plot_edge_intensity}
-\title{Create Edge Intensity Histograms with Optional Normalization}
+\title{Create Edge Intensity Histograms with Optional Normalization (for cimg objects)}
 \usage{
 plot_edge_intensity(
-  img_df1,
-  img_df2,
+  img_cimg1,
+  img_cimg2,
   edge_width = 150,
   img1_name = "Background",
   img2_name = "Washed",
@@ -14,11 +14,11 @@ plot_edge_intensity(
 )
 }
 \arguments{
-\item{img_df1}{`data.frame`. First image data frame (typically background)
-with columns `x`, `y`, `R`, `G`, `B` created by `initialize_image()`.}
+\item{img_cimg1}{`cimg`. First image object (typically background)
+loaded with `load_image()` from the imager package.}
 
-\item{img_df2}{`data.frame`. Second image data frame (typically washed)
-with columns `x`, `y`, `R`, `G`, `B` created by `initialize_image()`.}
+\item{img_cimg2}{`cimg`. Second image object (typically washed)
+loaded with `load_image()` from the imager package.}
 
 \item{edge_width}{`numeric(1)`. Width of edge region in pixels from the
 outer border. Default is 150.}
@@ -37,12 +37,13 @@ A `list` containing:
   \itemize{
     \item `plot`: ggplot2 comparison histogram
     \item `statistics`: Statistical summaries of intensities
-    \item `normalized_image`: Normalized image data frame (only if normalize_background = TRUE)
+    \item `normalized_image`: Normalized image cimg object (only if normalize_background = TRUE)
   }
 }
 \description{
 Generates histograms comparing edge pixel intensities between two images
-with optional background normalization. Can either compare original images
+with optional background normalization. Works with cimg objects from the
+imager package loaded with load_image(). Can either compare original images
 directly or show the effect of normalization on the second image. Useful
 for visualizing background correction and intensity distributions.
 }

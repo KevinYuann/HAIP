@@ -5,7 +5,7 @@
 \title{Plot Image with Colony Overlays}
 \usage{
 plot_image(
-  img_df,
+  img,
   colony_data = NULL,
   show_colony_grid = FALSE,
   use_new_boxes = FALSE,
@@ -14,8 +14,7 @@ plot_image(
 )
 }
 \arguments{
-\item{img_df}{`data.frame`. Image data frame created by `initialize_image()`,
-containing pixel coordinates and color values.}
+\item{img}{`cimg`. Image object loaded by `imager::load.image()`.}
 
 \item{colony_data}{`data.frame` or `NULL`. Colony data with coordinates and
 bounding box information. If `NULL`, only the base image is plotted.}

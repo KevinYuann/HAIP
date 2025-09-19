@@ -1,44 +1,37 @@
-#' Initialize Colony Data from .dat File
+#' Initialize Colony Data from File
 #'
-#' Reads a .dat file containing colony data and converts it to a data frame format.
-#' Automatically skips header lines that start with "#" and adjusts y-coordinates
-#' to match image coordinate system (top-left origin, y increasing downwards).
+#' Reads colony data from a tab-separated values (TSV) file, automatically
+#' skipping comment lines that start with "#" and properly formatting the
+#' first column as "row". The function handles files with variable numbers
+#' of header comment lines.
 #'
-#' @param path_name `character(1)`. Path to the .dat file to be read and
-#'   processed. The file should be tab-separated with optional header lines
-#'   starting with "#".
-#' @param image_df `data.frame`. Image data frame created by `initialize_image()`.
-#'   Used to determine the image height for coordinate transformation.
+#' The coordinates in the input file are assumed to already be in the top-left
+#' origin coordinate system, so no coordinate transformation is performed.
 #'
-#' @return A `data.frame` containing the colony data with y-coordinates flipped
-#'   to match image orientation (y increases downwards from top-left origin).
+#' @param path_name `character(1)`. Path to the TSV file containing colony data.
+#'   The file may contain comment lines starting with "#" at the beginning.
+#' @param image_obj `cimg`. Image object from the imager package (currently
+#'   unused but included for potential future functionality).
+#'
+#' @return A `data.frame` containing the colony data from the file with the
+#'   first column renamed to "row" and comment lines properly skipped.
 #' @export
-initialize_colony_data <- function(path_name, image_df) {
+initialize_colony_data <- function(path_name, image_obj) {
   con <- file(path_name, "r")
   lines_to_skip <- 0
-
-  # Read lines one by one until we find a line that doesn't start with "#"
   while(TRUE) {
     line <- readLines(con, n = 1)
-    if(length(line) == 0) break  # End of file
+    if(length(line) == 0) break
     if(startsWith(line, "#")) {
       lines_to_skip <- lines_to_skip + 1
     } else {
-      break  # Found first non-header line
+      break
     }
   }
   close(con)
-
   data <- read_tsv(path_name, skip = lines_to_skip - 1, show_col_types = FALSE)
   colnames(data)[1] <- "row"
 
-  image_height <- max(image_df$y)
-
-  # Flip y-coordinates to match image coordinate system
-  # Convert from bottom-left origin to top-left origin
-  if("y" %in% colnames(data)) {
-    data$y <- image_height - data$y
-  }
-
+  # No coordinate flipping needed - coordinates are already in top-left origin system
   return(data)
 }

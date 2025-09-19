@@ -5,10 +5,8 @@
 #' calculates the difference in their mean grayscale intensities. Useful
 #' for background normalization and image comparison tasks.
 #'
-#' @param img_df1 `data.frame`. First image data frame with columns `x`, `y`,
-#'   `R`, `G`, `B` created by `initialize_image()`.
-#' @param img_df2 `data.frame`. Second image data frame with columns `x`, `y`,
-#'   `R`, `G`, `B` created by `initialize_image()`.
+#' @param img1 `cimg`. First image object from the imager package.
+#' @param img2 `cimg`. Second image object from the imager package.
 #' @param edge_width `numeric(1)`. Width of edge region in pixels from the
 #'   outer border. Default is 150.
 #'
@@ -19,41 +17,51 @@
 #'     \item `difference`: Difference between the two mean intensities
 #'   }
 #' @export
-calculate_edge_intensity <- function(img_df1, img_df2, edge_width = 150) {
-  # Helper function to extract edge pixels and calculate mean intensity
-  calculate_edge_mean <- function(img_df, width) {
+calculate_edge_intensity_imager <- function(img1, img2, edge_width = 150) {
+
+  # Helper function to extract edge pixels and calculate median intensity
+  calculate_edge_median <- function(img, width) {
+    # Convert to grayscale if needed
+    if (dim(img)[4] > 1) {
+      gray_img <- grayscale(img)
+    } else {
+      gray_img <- img
+    }
+
     # Get image dimensions
-    max_x <- max(img_df$x)
-    max_y <- max(img_df$y)
+    img_width <- width(gray_img)
+    img_height <- height(gray_img)
 
-    # Filter to edge pixels only
-    edge_pixels <- img_df %>%
-      filter(
-        x <= width |                    # Left edge
-          x >= (max_x - width + 1) |     # Right edge
-          y <= width |                   # Bottom edge (assuming y=1 is bottom)
-          y >= (max_y - width + 1)      # Top edge
-      ) %>%
-      mutate(intensity = rgb_to_gray(R, G, B)) %>%  # Convert to grayscale
-      pull(intensity)                               # Extract intensity values
+    # Create edge mask - TRUE for edge pixels, FALSE for interior
+    edge_mask <- imfill(img_width, img_height, val = FALSE)
 
-    return(mean(edge_pixels, na.rm = TRUE))
+    # Left edge
+    edge_mask[1:width, , , ] <- TRUE
+    # Right edge
+    edge_mask[(img_width - width + 1):img_width, , , ] <- TRUE
+    # Top edge
+    edge_mask[, 1:width, , ] <- TRUE
+    # Bottom edge
+    edge_mask[, (img_height - width + 1):img_height, , ] <- TRUE
+
+    # Extract edge pixels
+    edge_pixels <- gray_img[edge_mask]
+
+    return(median(edge_pixels, na.rm = TRUE))
   }
 
   # Validate inputs
-  if (missing(img_df1) || missing(img_df2)) {
-    stop("Both img_df1 and img_df2 must be provided")
+  if (missing(img1) || missing(img2)) {
+    stop("Both img1 and img2 must be provided")
   }
 
-  # Check required columns
-  required_cols <- c("x", "y", "R", "G", "B")
-  if (!all(required_cols %in% names(img_df1)) || !all(required_cols %in% names(img_df2))) {
-    stop("Both data frames must have columns: x, y, R, G, B")
+  if (!inherits(img1, "cimg") || !inherits(img2, "cimg")) {
+    stop("Both img1 and img2 must be cimg objects from the imager package")
   }
 
   # Get dimensions for validation
-  dims1 <- c(max(img_df1$x), max(img_df1$y))
-  dims2 <- c(max(img_df2$x), max(img_df2$y))
+  dims1 <- c(width(img1), height(img1))
+  dims2 <- c(width(img2), height(img2))
 
   if (!identical(dims1, dims2)) {
     warning("Images have different dimensions")
@@ -68,14 +76,14 @@ calculate_edge_intensity <- function(img_df1, img_df2, edge_width = 150) {
                   "Consider using", max_edge_width, "or smaller."))
   }
 
-  mean_intensity1 <- calculate_edge_mean(img_df1, edge_width)
-  mean_intensity2 <- calculate_edge_mean(img_df2, edge_width)
+  median_intensity1 <- calculate_edge_median(img1, edge_width)
+  median_intensity2 <- calculate_edge_median(img2, edge_width)
 
-  intensity_difference <- mean_intensity1 - mean_intensity2
+  intensity_difference <- median_intensity1 - median_intensity2
 
   return(list(
-    mean_intensity1 = mean_intensity1,
-    mean_intensity2 = mean_intensity2,
+    median_intensity1 = median_intensity1,
+    median_intensity2 = median_intensity2,
     difference = intensity_difference
   ))
 }
