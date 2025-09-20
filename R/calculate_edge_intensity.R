@@ -17,7 +17,7 @@
 #'     \item `difference`: Difference between the two mean intensities
 #'   }
 #' @export
-calculate_edge_intensity_imager <- function(img1, img2, edge_width = 150) {
+calculate_edge_intensity <- function(img1, img2, edge_width = 150) {
 
   # Helper function to extract edge pixels and calculate median intensity
   calculate_edge_median <- function(img, width) {

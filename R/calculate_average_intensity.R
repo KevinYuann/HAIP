@@ -22,7 +22,7 @@
 #'   sd_intensity, containing the statistical measures of pixel intensity
 #'   within each bounding box.
 #' @export
-calculate_average_intensity_imager <- function(img, colony_data, prefix = "bg") {
+calculate_average_intensity <- function(img, colony_data, prefix = "bg") {
 
   # Convert to grayscale if image is color
   if (dim(img)[4] > 1) {
@@ -47,7 +47,6 @@ calculate_average_intensity_imager <- function(img, colony_data, prefix = "bg") 
 
     # Check if any coordinates are NA
     if (any(is.na(c(xl, xr, yt, yb)))) {
-      cat(sprintf("Warning: Missing bounding box coordinates for box %d\n", i))
       next
     }
 

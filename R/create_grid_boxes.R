@@ -32,8 +32,6 @@ create_grid_boxes <- function(colony_data) {
 
     # Skip if size is NA or invalid
     if(is.na(colony_size) || colony_size <= 0) {
-      cat(sprintf("Warning: Invalid size for colony row %s, col %s (size: %s)\n",
-                  colony_data$row[i], colony_data$col[i], colony_size))
       next
     }
 
