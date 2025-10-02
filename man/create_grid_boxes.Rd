@@ -4,12 +4,19 @@
 \alias{create_grid_boxes}
 \title{Create Normalized Grid Boxes for Colonies}
 \usage{
-create_grid_boxes(colony_data)
+create_grid_boxes(colony_data, mode = "inside", gap_factor = 0.05)
 }
 \arguments{
 \item{colony_data}{`data.frame`. Colony data containing at minimum columns
 `x`, `y`, `size`, `row`, and `col`. The `size` column should represent
 the area of each colony.}
+
+\item{mode}{`character`. Either "inside" (default) or "outside".
+- "inside": Boxes fit within colony boundaries
+- "outside": Boxes based on inter-colony spacing}
+
+\item{gap_factor}{`numeric`. Only used when mode = "outside".
+Fraction of median distance to use as gap between boxes (default: 0.1)}
 }
 \value{
 A `data.frame` containing the original colony data plus new columns:
@@ -17,13 +24,14 @@ A `data.frame` containing the original colony data plus new columns:
     \item `new_xl`, `new_xr`: Left and right x-coordinates of bounding box
     \item `new_yt`, `new_yb`: Top and bottom y-coordinates of bounding box
     \item `grid_box_size`: Area of the created square bounding box
+    \item `box_mode`: The mode used to create the boxes
   }
 }
 \description{
-Creates square bounding boxes for each colony based on their size (area).
-The function back-calculates the colony radius assuming circular colonies,
-then creates the largest square that fits within each circle, centered on
-the colony's coordinates.
+Creates square bounding boxes for each colony based on their size (area) or
+based on inter-colony distances. The function supports two modes:
+- "inside": Creates the largest square that fits within each colony (assuming circular)
+- "outside": Creates boxes based on median inter-colony distance with optional gaps
 }
 \details{
 If there is no colony, the function will label the new coordinates as NA.

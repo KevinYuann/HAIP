@@ -35,16 +35,14 @@ plot_edge_intensity <- function(img_cimg1, img_cimg2, edge_width = 150,
     stop("Both inputs must be cimg objects from the imager package")
   }
 
-  # Helper function to convert RGB to grayscale intensity
-  rgb_to_gray <- function(r, g, b) {
-    return(0.299 * r + 0.587 * g + 0.114 * b)
-  }
-
   # Helper function to extract edge pixels and return intensity data
   extract_edge_intensities <- function(img_cimg, width) {
+    # Convert to grayscale using imager's built-in function
+    gray_img <- imager::grayscale(img_cimg)
+
     # Get image dimensions
-    img_width <- dim(img_cimg)[1]
-    img_height <- dim(img_cimg)[2]
+    img_width <- dim(gray_img)[1]
+    img_height <- dim(gray_img)[2]
 
     # Create logical mask for edge pixels
     edge_mask <- array(FALSE, dim = c(img_width, img_height))
@@ -55,31 +53,8 @@ plot_edge_intensity <- function(img_cimg1, img_cimg2, edge_width = 150,
     edge_mask[, 1:width] <- TRUE                           # Bottom edge
     edge_mask[, (img_height - width + 1):img_height] <- TRUE # Top edge
 
-    # Extract RGB values for edge pixels
-    if (dim(img_cimg)[4] >= 3) {
-      # Color image - extract R, G, B channels
-      r_vals <- as.vector(img_cimg[,,1,1])[edge_mask]
-      g_vals <- as.vector(img_cimg[,,1,2])[edge_mask]
-      b_vals <- as.vector(img_cimg[,,1,3])[edge_mask]
-
-      # Convert to 0-255 scale if needed (imager typically uses 0-1)
-      if (max(r_vals, na.rm = TRUE) <= 1) {
-        r_vals <- r_vals * 255
-        g_vals <- g_vals * 255
-        b_vals <- b_vals * 255
-      }
-
-      # Calculate grayscale intensity
-      intensities <- rgb_to_gray(r_vals, g_vals, b_vals)
-    } else {
-      # Grayscale image
-      intensities <- as.vector(img_cimg[,,1,1])[edge_mask]
-
-      # Convert to 0-255 scale if needed
-      if (max(intensities, na.rm = TRUE) <= 1) {
-        intensities <- intensities * 255
-      }
-    }
+    # Extract grayscale intensities for edge pixels
+    intensities <- as.vector(gray_img[,,1,1])[edge_mask]
 
     return(intensities)
   }
@@ -110,7 +85,7 @@ plot_edge_intensity <- function(img_cimg1, img_cimg2, edge_width = 150,
                 img1_name, stats1$mean, stats1$median, stats1$sd, stats1$n))
     cat(sprintf("%s Image: Mean=%.2f, Median=%.2f, SD=%.2f, n=%d\n",
                 img2_name, stats2$mean, stats2$median, stats2$sd, stats2$n))
-    cat(sprintf("Mean difference: %.2f\n\n", stats1$mean - stats2$mean))
+    cat(sprintf("Median difference: %.2f\n\n", stats1$median - stats2$median))
 
     # Create individual plots
     plot1 <- ggplot(data.frame(intensity = intensities1), aes(x = intensity)) +
@@ -120,7 +95,7 @@ plot_edge_intensity <- function(img_cimg1, img_cimg2, edge_width = 150,
       labs(title = paste(img1_name, "Image"),
            subtitle = paste("Mean:", round(stats1$mean, 2), "| Median:", round(stats1$median, 2),
                             "| SD:", round(stats1$sd, 2)),
-           x = "Intensity (0-255)", y = "Pixel Count") +
+           x = "Intensity (0-1)", y = "Pixel Count") +
       theme_minimal() +
       theme(plot.title = element_text(size = 12))
 
@@ -131,20 +106,20 @@ plot_edge_intensity <- function(img_cimg1, img_cimg2, edge_width = 150,
       labs(title = paste(img2_name, "Image"),
            subtitle = paste("Mean:", round(stats2$mean, 2), "| Median:", round(stats2$median, 2),
                             "| SD:", round(stats2$sd, 2)),
-           x = "Intensity (0-255)", y = "Pixel Count") +
+           x = "Intensity (0-1)", y = "Pixel Count") +
       theme_minimal() +
       theme(plot.title = element_text(size = 12))
 
     comparison_plot <- grid.arrange(plot1, plot2, ncol = 2,
-                                    top = paste("Background vs Washed Comparison | Mean difference:",
-                                                round(stats1$mean - stats2$mean, 2)))
+                                    top = paste("Background vs Washed Comparison | Median difference:",
+                                                round(stats1$median - stats2$median, 2)))
 
     return(list(
       plot = comparison_plot,
       statistics = list(
         background_stats = stats1,
         washed_stats = stats2,
-        difference = stats1$mean - stats2$mean
+        difference = stats1$median - stats2$median
       )
     ))
 
@@ -152,7 +127,7 @@ plot_edge_intensity <- function(img_cimg1, img_cimg2, edge_width = 150,
     # Perform normalization and compare original vs normalized washed
 
     # Calculate normalization factor
-    normalization_factor <- stats1$mean - stats2$mean
+    normalization_factor <- stats1$median - stats2$median
 
     # Create normalized washed image
     normalized_img2 <- img_cimg2
@@ -209,7 +184,7 @@ plot_edge_intensity <- function(img_cimg1, img_cimg2, edge_width = 150,
       labs(title = paste("Original", img2_name),
            subtitle = paste("Mean:", round(stats2$mean, 2), "| Median:", round(stats2$median, 2),
                             "| SD:", round(stats2$sd, 2)),
-           x = "Intensity (0-255)", y = "Pixel Count") +
+           x = "Intensity (0-1)", y = "Pixel Count") +
       theme_minimal() +
       theme(plot.title = element_text(size = 12))
 
@@ -220,7 +195,7 @@ plot_edge_intensity <- function(img_cimg1, img_cimg2, edge_width = 150,
       labs(title = paste("Normalized", img2_name),
            subtitle = paste("Mean:", round(normalized_stats2$mean, 2), "| Median:", round(normalized_stats2$median, 2),
                             "| SD:", round(normalized_stats2$sd, 2)),
-           x = "Intensity (0-255)", y = "Pixel Count") +
+           x = "Intensity (0-1)", y = "Pixel Count") +
       theme_minimal() +
       theme(plot.title = element_text(size = 12))
 

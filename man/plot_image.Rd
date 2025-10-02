@@ -33,11 +33,10 @@ points as yellow dots. Default is `FALSE`.}
 labels for each colony. Default is `FALSE`.}
 }
 \value{
-A `ggplot2` object showing the image with selected overlays.
+Invisibly returns `NULL`. Plots are created as side effects.
 }
 \description{
 Creates a visualization of an image with optional overlays showing colony
-grids, center points, and row-column labels. Flexible display options
-allow customization of what colony information to show on top of the
-base image.
+grids, center points, and row-column labels. Uses base R graphics for
+memory-efficient plotting of large images.
 }

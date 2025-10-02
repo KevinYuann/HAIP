@@ -1,9 +1,8 @@
 #' Plot Image with Colony Overlays
 #'
 #' Creates a visualization of an image with optional overlays showing colony
-#' grids, center points, and row-column labels. Flexible display options
-#' allow customization of what colony information to show on top of the
-#' base image.
+#' grids, center points, and row-column labels. Uses base R graphics for
+#' memory-efficient plotting of large images.
 #'
 #' @param img `cimg`. Image object loaded by `imager::load.image()`.
 #' @param colony_data `data.frame` or `NULL`. Colony data with coordinates and
@@ -18,77 +17,60 @@
 #' @param show_rowcol_labels `logical(1)`. If `TRUE`, displays row-column
 #'   labels for each colony. Default is `FALSE`.
 #'
-#' @return A `ggplot2` object showing the image with selected overlays.
+#' @return Invisibly returns `NULL`. Plots are created as side effects.
 #' @export
 plot_image <- function(img,
-                              colony_data = NULL,
-                              show_colony_grid = FALSE,
-                              use_new_boxes = FALSE,
-                              show_center_points = FALSE,
-                              show_rowcol_labels = FALSE) {
+                       colony_data = NULL,
+                       show_colony_grid = FALSE,
+                       use_new_boxes = FALSE,
+                       show_center_points = FALSE,
+                       show_rowcol_labels = FALSE) {
 
-  # Convert imager object to RGB data frame for plotting
-  img_rgb <- as.data.frame(img)
+  # Plot the base image using imager's plot method
+  plot(img, axes = FALSE, main = NULL)
 
-  # Create RGB hex values for each pixel
-  # Extract RGB values by color channel
-  red_vals <- img_rgb$value[img_rgb$cc == 1]
-  green_vals <- img_rgb$value[img_rgb$cc == 2]
-  blue_vals <- img_rgb$value[img_rgb$cc == 3]
+  # Add overlays if colony_data is provided
+  if (!is.null(colony_data)) {
 
-  # Create plotting data frame
-  img_plot_data <- data.frame(
-    x = img_rgb$x[img_rgb$cc == 1],
-    y = img_rgb$y[img_rgb$cc == 1],
-    red = red_vals,
-    green = green_vals,
-    blue = blue_vals
-  )
+    # Add colony grid overlay
+    if (show_colony_grid) {
+      if (use_new_boxes) {
+        rect(xleft = colony_data$new_xl,
+             ybottom = colony_data$new_yb,
+             xright = colony_data$new_xr,
+             ytop = colony_data$new_yt,
+             border = "red",
+             lwd = 2)
+      } else {
+        rect(xleft = colony_data$xl,
+             ybottom = colony_data$yb,
+             xright = colony_data$xr,
+             ytop = colony_data$yt,
+             border = "red",
+             lwd = 2)
+      }
+    }
 
-  # Convert to hex colors for ggplot
-  img_plot_data$hex_color <- rgb(img_plot_data$red,
-                                 img_plot_data$green,
-                                 img_plot_data$blue)
+    # Add center points
+    if (show_center_points) {
+      points(x = colony_data$x,
+             y = colony_data$y,
+             col = "yellow",
+             pch = 16,
+             cex = 1.2)
+    }
 
-  # Create base plot
-  baseplot <- ggplot() +
-    geom_raster(data = img_plot_data, aes(x = x, y = y, fill = hex_color)) +
-    scale_fill_identity() +
-    scale_y_reverse() +  # Flip y-axis to match image orientation
-    coord_fixed() +      # Maintain aspect ratio
-    theme_void() +
-    theme(legend.position = "none")
-
-  # Add colony grid overlay
-  if (show_colony_grid && !is.null(colony_data)) {
-    if (use_new_boxes) {
-      baseplot <- baseplot +
-        geom_rect(data = colony_data,
-                  aes(xmin = new_xl, xmax = new_xr, ymin = new_yb, ymax = new_yt),
-                  fill = NA, color = "red", linewidth = 0.8, alpha = 0.8)
-    } else {
-      baseplot <- baseplot +
-        geom_rect(data = colony_data,
-                  aes(xmin = xl, xmax = xr, ymin = yb, ymax = yt),
-                  fill = NA, color = "red", linewidth = 0.8, alpha = 0.8)
+    # Add row-column labels
+    if (show_rowcol_labels) {
+      text(x = colony_data$x,
+           y = colony_data$y,
+           labels = paste0(colony_data$row, "-", colony_data$col),
+           col = "white",
+           cex = 0.8,
+           pos = 3,  # Position above the point
+           font = 2)  # Bold font
     }
   }
 
-  # Add center points
-  if (show_center_points && !is.null(colony_data)) {
-    baseplot <- baseplot +
-      geom_point(data = colony_data,
-                 aes(x = x, y = y),
-                 color = "yellow", size = 1.0, alpha = 0.9)
-  }
-
-  # Add row-column labels
-  if (show_rowcol_labels && !is.null(colony_data)) {
-    baseplot <- baseplot +
-      geom_text(data = colony_data,
-                aes(x = x, y = y, label = paste0(row, "-", col)),
-                color = "white", size = 2, vjust = -1.2)
-  }
-
-  return(baseplot)
+  invisible(NULL)
 }
